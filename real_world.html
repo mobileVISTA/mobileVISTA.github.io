@@ -332,7 +332,9 @@ const videosEl = document.getElementById("videos");
 function selectTrial(i) {
   const trial = TRIALS[i];
   dots.forEach((d, j) => d.classList.toggle("active", j === i));
-  info.textContent = `Trial ${i} · offset (x = ${trial.x.toFixed(2)} cm, y = ${trial.y.toFixed(2)} cm)`;
+  const xDir = trial.x >= 0 ? "Right" : "Left";
+  const yDir = trial.y >= 0 ? "Forward" : "Back";
+  info.innerHTML = `Trial ${i}<br>${xDir} ${Math.abs(trial.x).toFixed(2)} cm, ${yDir} ${Math.abs(trial.y).toFixed(2)} cm`;
 
   for (const policy of POLICY_ORDER) {
     const panel = videosEl.querySelector(`.vpanel[data-policy="${policy}"]`);
@@ -357,6 +359,21 @@ function selectTrial(i) {
     panel.querySelector(".outcome").innerHTML = outcomeSVG(trial.outcomes[policy]);
   }
 }
+// Report own size to parent
+(function () {
+  const send = () => {
+    const h = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight
+    );
+    parent.postMessage({ type: 'iframe-resize', height: h }, '*');
+  };
+  window.addEventListener('load', send);
+  window.addEventListener('resize', send);
+  if (window.ResizeObserver) {
+    new ResizeObserver(send).observe(document.body);
+  }
+})();
 </script>
 
 </body>

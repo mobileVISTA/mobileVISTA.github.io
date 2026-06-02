@@ -18,6 +18,18 @@
           width: 100%;
           height: auto;
       }
+      .side-by-side {
+        width: 54.7%;
+        margin: 1.5vw auto;
+        display: flex;
+        gap: 1vw;
+        align-items: center;
+        justify-content: center;
+    }
+    .side-by-side img {
+        width: 50%;
+        height: auto;
+    }
     </style>
 </head>
 <body>
@@ -34,23 +46,17 @@
 
         <br>
         <br>
-        <div class="slideshow-container">
-            <!-- <div class="video_container">
-                <video autoplay muted loop controls playsinline preload="metadata" width="100%">
-                    <source src="media/videos/video.mp4" type="video/mp4">
-                </video>
-                <div class="caption">
-                    <p><i>(Unmute for sound)</i></p>
-                </div>
-            </div> -->
-            teaser here
+        <div class="video_container">
+            <div style="width: 54.7%; aspect-ratio: 16/9; background-color: #f2f2f2; display: flex; align-items: center; justify-content: center; border-radius: 0.5vw; font-size: 1.2vw; color: #999; margin: auto;">
+                Video placeholder
+            </div>
         </div>
         <br>
 
         <div id="abstract">
             <h1>Abstract</h1>
             <p>
-                Mobile manipulators such as humanoid robots are increasingly deployed in dynamic, unstructured environments to perform dexterous manipulation tasks. However, end-to-end manipulation policies trained to imitate demonstration data collected from a single robot pose are brittle: even centimeter-scale deviations in robot pose at deployment can drive egocentric observations and end-effector trajectories out of the training distribution, leading to sharp drops in performance. At the same time, collecting additional real-world data with diverse poses can be prohibitively expensive. We introduce MobileVISTA, a data generation framework that transforms demonstrations captured at canonical poses into diverse, pose-perturbed training data by jointly augmenting egocentric visual observations and retargeting actions to compensate for base pose changes. Policies trained on this augmented data learn to respond to previously out-of-distribution poses encountered at test time. To evaluate its effectiveness, we study MobileVISTA in both simulated manipulation tasks and on a real Galaxea R1 Pro mobile manipulator. Across domains, MobileVISTA improves robustness to unseen base perturbations, while requiring no additional real-world demonstration collection. These results highlight MobileVISTA as a practical step toward deploying mobile manipulation systems that can reliably chain navigation and manipulation skills.
+                Mobile manipulators such as humanoid robots are increasingly deployed in dynamic, unstructured environments to perform dexterous manipulation tasks. However, end-to-end manipulation policies trained to imitate demonstration data collected from a single robot pose are brittle: even centimeter-scale deviations in robot pose at deployment can drive egocentric observations and end-effector trajectories out of the training distribution, leading to sharp drops in performance. At the same time, collecting additional real-world data with diverse poses can be prohibitively expensive. We introduce <strong>MobileVISTA</strong>, a data generation framework that transforms demonstrations captured at canonical poses into diverse, pose-perturbed training data by jointly augmenting egocentric visual observations and retargeting actions to compensate for base pose changes. Policies trained on this augmented data learn to respond to previously out-of-distribution poses encountered at test time. To evaluate its effectiveness, we study MobileVISTA in both simulated manipulation tasks and on a real Galaxea R1 Pro mobile manipulator. Across domains, MobileVISTA improves robustness to unseen base perturbations, while requiring no additional real-world demonstration collection. These results highlight MobileVISTA as a practical step toward deploying mobile manipulation systems that can reliably chain navigation and manipulation skills.
             </p>
         </div>
     </div>
@@ -61,17 +67,18 @@
 <div id="overview">
     <h1>Method Overview</h1>
     <p>
-      
+      what our method does, input, output. graphic/animation of steps, will also use in video.
     </p>
 
     <h1>Example Augmented Dataset Trajectories</h1>
     <p>
-        
+    maybe have original in center, and then arrows? pointing down to all of these options
+     forward, back, left -yaw, right + yaw
     </p>
 
     <h1>Real-World Deployment</h1>
     <p>
-        We deploy MobileVISTA on a Galaxea R1 Pro mobile manipulator on a bookshelf-stacking task and compare against three baselines (2D imitation, DP3, and a fine-tuned <i>&pi;</i><sub>0.5</sub>). Across object-position perturbations spanning the full reachable region, MobileVISTA succeeds where baselines fail to either reach the object or recover from out-of-distribution viewpoints. <br><br><br>
+        Something about our real world task, eval practice, baselines. what we generally see. what this plot below is, overhead view<br><br><br>
     </p>
 
     <div class="top-figure">
@@ -91,36 +98,39 @@
         style="width: 100%; border: none; display: block; transition: height 0.2s ease;"></iframe>
     </div>
     <script>
-      (function () {
-        // Match wrapper width to the body text column, whatever main.css says
-        const refP = document.querySelector('#overview p');
-        const wrapper = document.getElementById('rollouts-wrapper');
-        const syncWidth = () => {
-          wrapper.style.width = window.getComputedStyle(refP).width;
-        };
-        syncWidth();
-        window.addEventListener('resize', syncWidth);
-
-        // Auto-size iframe height to content
-        const f = document.getElementById('rollouts-frame');
-        f.addEventListener('load', () => {
-          const doc = f.contentDocument;
-          f.style.height = doc.documentElement.scrollHeight + 'px';
-        });
+        (function () {
+          const refP = document.querySelector('#overview p');
+          const wrapper = document.getElementById('rollouts-wrapper');
+          const f = document.getElementById('rollouts-frame');
+      
+          const syncWidth = () => {
+            wrapper.style.width = window.getComputedStyle(refP).width;
+          };
+          syncWidth();
+          window.addEventListener('resize', syncWidth);
+      
+          window.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'iframe-resize') {
+              f.style.height = e.data.height + 'px';
+            }
+          });
         })();
-    </script>
+      </script>
+
+    <h1>Quality Analysis of Synthesized Observations</h1>
+    <p>
+        us vs gen3c. qualitative pictures, psnr by traj, policy performance plot
+    </p>
+    <div class="side-by-side">
+        <img src="assets/gen3c_qual.png" alt="Qualitative comparison with Gen3C" />
+        <img src="assets/gen3c_psnr.png" alt="PSNR by trajectory" />
+    </div>
+    <br>
 
     <h1>Results</h1>
     <p>
         sim videos? definitely sim plots
     </p>
-
-    
-    <h1>NVS-generated Comparison</h1>
-    <p>
-        us vs gen3c. qualitative pictures, psnr by traj, policy performance plot
-    </p>
-    <br>
 </div>
 
 </body>
