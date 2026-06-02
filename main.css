@@ -123,9 +123,9 @@ body, html {
 }
 
 .title_left > h1 {
-    color: #8C1515;
+    color: #000000;
     font-family: "Source Serif 4", serif;
-    font-weight: normal;
+    font-weight: 600;
     font-size: 2.6vw;
     text-align: center;
 }
@@ -145,7 +145,7 @@ body, html {
 
 #abstract h1 {
     text-align: center;
-    font-weight: normal;
+    font-weight: 600;
 }
 
 
