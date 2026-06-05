@@ -30,6 +30,12 @@
         width: 50%;
         height: auto;
     }
+    .teaser-video {
+        width: 54.7%;
+        display: block;
+        margin: 0 auto;
+        border-radius: 0.5vw;
+    }
     </style>
 </head>
 <body>
@@ -47,9 +53,10 @@
         <br>
         <br>
         <div class="video_container">
-            <div style="width: 54.7%; aspect-ratio: 16/9; background-color: #f2f2f2; display: flex; align-items: center; justify-content: center; border-radius: 0.5vw; font-size: 1.2vw; color: #999; margin: auto;">
-                Video placeholder
-            </div>
+            <video class="teaser-video" controls autoplay muted loop playsinline>
+                <source src="assets/MobileVISTA_CoRL2026.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
         </div>
         <br>
 
@@ -67,59 +74,86 @@
 <div id="overview">
     <h1>Method Overview</h1>
     <p>
-      what our method does, input, output. graphic/animation of steps, will also use in video.
+      MobileVISTA takes manipulation demonstrations collected from a single canonical robot pose and generates training data covering a wide range of base poses, without collecting any additional demonstrations. For each augmented trajectory, we sample a base perturbation and jointly synthesize two things: a pose-shifted egocentric observation (via geometry-based reprojection, robot segmentation, and inpainting) and a retargeted action sequence (via inverse kinematics in end-effector space). Policies trained on the resulting dataset learn to handle base poses far outside the original demonstration distribution at test time.
     </p>
 
     <h1>Example Augmented Dataset Trajectories</h1>
     <p>
-    maybe have original in center, and then arrows? pointing down to all of these options
-     forward, back, left -yaw, right + yaw
+      A single source demonstration becomes many augmented variants, each capturing what the same task would look like and require if the robot had started from a different base pose. The center shows the original canonical trajectory; the surrounding variants show forward, backward, leftward, and rightward translations, along with positive and negative yaw rotations. Both the visual observations and the actions are updated consistently in each variant.
     </p>
 
     <h1>Real-World Deployment</h1>
     <p>
-        Something about our real world task, eval practice, baselines. what we generally see. what this plot below is, overhead view<br><br><br>
+        We deploy MobileVISTA on a Galaxea R1 Pro humanoid and compare against three baselines: a vanilla 2D diffusion policy trained only on canonical-pose demonstrations (Canonical-2D), a 3D point-cloud-based diffusion policy (DP3), and a fine-tuned &pi;<sub>0.5</sub> vision-language-action model. For each evaluation trial, we sample a base offset uniformly within a 15cm disk and manually drive the robot to that offset, then roll out all four policies from the same starting configuration in randomized order. The plots below show the spatial distribution of outcomes: each dot is a sampled base offset (overhead view, in centimeters), colored by whether each policy succeeded from that starting pose.<br><br><br>
     </p>
 
+    <!-- ============ BOOK STACKING ============ -->
+    <h2>Book Stacking</h2>
+
     <div class="top-figure">
-      <img src="assets/real_plot.png" alt="Real-world rollout outcomes grouped by policy" />
+      <img src="assets/real_plot.png" alt="Book stacking rollout outcomes grouped by policy" />
     </div>
 
     <p>
-      <br><br><br>some text about representative rollouts, and all rollouts avail below. Click any dot in the plot to load the four corresponding rollout videos.
-      </p>
+      <br><br><br>In Book Stacking, the robot must grasp a vertically placed book and reorient it horizontally onto a stack inside a bookshelf. MobileVISTA succeeds across a wide range of offsets, while the baselines collapse beyond the canonical pose. Click any dot in the plot to load the four corresponding rollout videos.
+    </p>
 
-    <div id="rollouts-wrapper" style="margin: 1.5vw auto 1vw;">
-      <iframe id="rollouts-frame"
+    <div class="rollouts-wrapper" style="margin: 1.5vw auto 1vw;">
+      <iframe class="rollouts-frame"
         src="real_world.html"
-        title="Rollout viewer"
+        title="Book stacking rollout viewer"
         frameborder="0"
         scrolling="no"
         style="width: 100%; border: none; display: block; transition: height 0.2s ease;"></iframe>
     </div>
+
+    <!-- ============ LAUNDRY SORT ============ -->
+    <h2>Laundry Sort</h2>
+
+    <div class="top-figure">
+      <img src="assets/laundry_real_plot.png" alt="Laundry sort rollout outcomes grouped by policy" />
+    </div>
+
+    <p>
+      <br><br><br>In Laundry Sort, the robot must sort four items into two bins: two black socks into a grey bin on the left, and a yellow towel and a beige pair of shorts into a larger green bin on the right. This task is substantially more challenging than Book Stacking due to its longer horizon, the deformability of the items, and the bimanual coordination required to sort multiple objects in sequence. Click any dot in the plot to load the four corresponding rollout videos. Each video panel shows the score (number of items correctly sorted out of four); an asterisk indicates a joint-limit violation during the rollout.
+    </p>
+
+    <div class="rollouts-wrapper" style="margin: 1.5vw auto 1vw;">
+      <iframe class="rollouts-frame"
+        src="real_world_laundry.html"
+        title="Laundry sort rollout viewer"
+        frameborder="0"
+        scrolling="no"
+        style="width: 100%; border: none; display: block; transition: height 0.2s ease;"></iframe>
+    </div>
+
     <script>
         (function () {
           const refP = document.querySelector('#overview p');
-          const wrapper = document.getElementById('rollouts-wrapper');
-          const f = document.getElementById('rollouts-frame');
-      
+          const wrappers = document.querySelectorAll('.rollouts-wrapper');
+
           const syncWidth = () => {
-            wrapper.style.width = window.getComputedStyle(refP).width;
+            const w = window.getComputedStyle(refP).width;
+            wrappers.forEach(el => { el.style.width = w; });
           };
           syncWidth();
           window.addEventListener('resize', syncWidth);
-      
+
           window.addEventListener('message', (e) => {
             if (e.data && e.data.type === 'iframe-resize') {
-              f.style.height = e.data.height + 'px';
+              document.querySelectorAll('.rollouts-frame').forEach(f => {
+                if (f.contentWindow === e.source) {
+                  f.style.height = e.data.height + 'px';
+                }
+              });
             }
           });
         })();
-      </script>
+    </script>
 
     <h1>Quality Analysis of Synthesized Observations</h1>
     <p>
-        us vs gen3c. qualitative pictures, psnr by traj, policy performance plot
+        We compare MobileVISTA's geometry-based observation synthesis against GEN3C, a state-of-the-art learned novel view synthesis model. Across all four simulated tasks, MobileVISTA produces sharper object boundaries, more consistent scene geometry, and higher PSNR against simulator-rendered oracle views. Policies trained on MobileVISTA-synthesized data also outperform those trained on GEN3C-synthesized data across the full range of perturbation magnitudes, with the gap in downstream performance tracking the gap in reconstruction quality.
     </p>
     <div class="side-by-side">
         <img src="assets/gen3c_qual.png" alt="Qualitative comparison with Gen3C" />
@@ -129,7 +163,7 @@
 
     <h1>Results</h1>
     <p>
-        sim videos? definitely sim plots
+        We evaluate MobileVISTA across four simulated tasks spanning two embodiments: Can Sort and Pouring on a Fourier GR-1 humanoid, and Box and Drawer on a bimanual Franka setup. MobileVISTA consistently outperforms Canonical-2D, DP3, and fine-tuned &pi;<sub>0.5</sub> baselines across all tasks, maintaining high success rates as the magnitude of base perturbation grows. The advantage holds even at large 15cm offsets, where the baselines collapse to near zero.
     </p>
 </div>
 

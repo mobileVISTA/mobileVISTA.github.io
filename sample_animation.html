@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sampled base offset Δp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #2E2D29;
+    --muted: #53565A;
+    --accent: #8C1515;
+    --grid: #d8d8d8;
+    --axis: rgba(46,45,41,0.45);
+    --circle-fill: rgba(46,45,41,0.05);
+    --circle-stroke: #2E2D29;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    margin: 0; padding: 0;
+  }
+  body {
+    font-family: "Source Serif 4", Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 12px; }
+  svg.plot { width: 100%; height: auto; display: block; }
+  .caption {
+    text-align: center;
+    font-size: 1.05rem;
+    line-height: 1.45;
+    margin-top: 0.4rem;
+  }
+  .caption .hint { color: var(--muted); font-size: 0.9rem; font-style: italic; }
+  .bar {
+    display: flex; justify-content: center; gap: 12px;
+    margin-top: 0.6rem;
+  }
+  .bar button {
+    font-family: "Source Serif 4", serif;
+    font-size: 0.9rem;
+    color: var(--fg);
+    background: #f4f4f4;
+    border: 1px solid #d8d8d8;
+    border-radius: 6px;
+    padding: 4px 14px;
+    cursor: pointer;
+  }
+  .bar button:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <svg class="plot" id="plot" viewBox="0 0 400 400"></svg>
+  <div class="caption">
+    <span><b>Sampled base offset Δp</b> = translation (Δb) + yaw rotation (Δθ)</span><br>
+    <span class="hint">the robot base shifts to a new spot, then turns slightly</span>
+  </div>
+  <div class="bar">
+    <button id="replay">Replay</button>
+    <button id="loop">Loop: on</button>
+  </div>
+</div>
+
+<script>
+// ---- tweakables ----------------------------------------------------------
+const SWEEP_DEG = 22;   // visual yaw sweep amplitude. Set to 5 to match paper (±5°), but it reads small on screen.
+// --------------------------------------------------------------------------
+
+const NS = "http://www.w3.org/2000/svg";
+const L = 16, R = 15, VB = 400, MARGIN = 36, PLOT = VB - 2 * MARGIN;
+const sx = (x) => MARGIN + ((x + L) / (2 * L)) * PLOT;
+const sy = (y) => MARGIN + ((L - y) / (2 * L)) * PLOT;
+const PX_PER_CM = PLOT / (2 * L);
+
+const svg = document.getElementById("plot");
+
+// ---- static plot (matches real_world.html) -------------------------------
+const c = document.createElementNS(NS, "circle");
+c.setAttribute("cx", sx(0)); c.setAttribute("cy", sy(0));
+c.setAttribute("r", (R / (2 * L)) * PLOT);
+c.setAttribute("fill", "var(--circle-fill)");
+c.setAttribute("stroke", "var(--circle-stroke)");
+c.setAttribute("stroke-width", "1.2");
+c.setAttribute("stroke-dasharray", "4 3");
+svg.appendChild(c);
+
+const ticks = [-15, -10, -5, 5, 10, 15];
+for (const t of ticks) {
+  const vx = document.createElementNS(NS, "line");
+  vx.setAttribute("x1", sx(t)); vx.setAttribute("x2", sx(t));
+  vx.setAttribute("y1", sy(-L)); vx.setAttribute("y2", sy(L));
+  vx.setAttribute("stroke", "var(--grid)"); vx.setAttribute("stroke-width", "0.5");
+  vx.setAttribute("opacity", "0.5"); svg.appendChild(vx);
+  const vy = document.createElementNS(NS, "line");
+  vy.setAttribute("y1", sy(t)); vy.setAttribute("y2", sy(t));
+  vy.setAttribute("x1", sx(-L)); vy.setAttribute("x2", sx(L));
+  vy.setAttribute("stroke", "var(--grid)"); vy.setAttribute("stroke-width", "0.5");
+  vy.setAttribute("opacity", "0.5"); svg.appendChild(vy);
+}
+
+const ax1 = document.createElementNS(NS, "line");
+ax1.setAttribute("x1", sx(-L)); ax1.setAttribute("x2", sx(L));
+ax1.setAttribute("y1", sy(0)); ax1.setAttribute("y2", sy(0));
+ax1.setAttribute("stroke", "var(--axis)"); ax1.setAttribute("stroke-width", "1.5");
+svg.appendChild(ax1);
+const ax2 = document.createElementNS(NS, "line");
+ax2.setAttribute("x1", sx(0)); ax2.setAttribute("x2", sx(0));
+ax2.setAttribute("y1", sy(-L)); ax2.setAttribute("y2", sy(L));
+ax2.setAttribute("stroke", "var(--axis)"); ax2.setAttribute("stroke-width", "1.5");
+svg.appendChild(ax2);
+
+for (const t of ticks) {
+  const tx = document.createElementNS(NS, "text");
+  tx.setAttribute("x", sx(t)); tx.setAttribute("y", sy(0) + 14);
+  tx.setAttribute("text-anchor", "middle"); tx.setAttribute("font-size", "10");
+  tx.setAttribute("font-family", "Source Serif 4, serif");
+  tx.setAttribute("font-weight", "600"); tx.setAttribute("fill", "var(--muted)");
+  tx.textContent = t; svg.appendChild(tx);
+  const ty = document.createElementNS(NS, "text");
+  ty.setAttribute("x", sx(0) - 6); ty.setAttribute("y", sy(t) + 3);
+  ty.setAttribute("text-anchor", "end"); ty.setAttribute("font-size", "10");
+  ty.setAttribute("font-family", "Source Serif 4, serif");
+  ty.setAttribute("font-weight", "600"); ty.setAttribute("fill", "var(--muted)");
+  ty.textContent = t; svg.appendChild(ty);
+}
+
+// ---- arrowhead markers ---------------------------------------------------
+const defs = document.createElementNS(NS, "defs");
+defs.innerHTML = `
+  <marker id="ah-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="#8C1515" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+  <marker id="ah-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="#2E2D29" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>`;
+svg.appendChild(defs);
+
+// ---- animated elements ---------------------------------------------------
+const originRing = document.createElementNS(NS, "circle");
+originRing.setAttribute("cx", sx(0)); originRing.setAttribute("cy", sy(0));
+originRing.setAttribute("r", 5);
+originRing.setAttribute("fill", "none");
+originRing.setAttribute("stroke", "var(--muted)");
+originRing.setAttribute("stroke-width", "1.2");
+svg.appendChild(originRing);
+
+const transVec = document.createElementNS(NS, "line");   // Δb
+transVec.setAttribute("stroke", "#2E2D29");
+transVec.setAttribute("stroke-width", "2");
+transVec.setAttribute("marker-end", "url(#ah-gray)");
+transVec.setAttribute("opacity", "0");
+svg.appendChild(transVec);
+
+const dbLabel = document.createElementNS(NS, "text");     // "Δb"
+dbLabel.setAttribute("font-family", "Source Serif 4, serif");
+dbLabel.setAttribute("font-size", "14"); dbLabel.setAttribute("font-style", "italic");
+dbLabel.setAttribute("fill", "#2E2D29"); dbLabel.setAttribute("opacity", "0");
+dbLabel.textContent = "Δb";
+svg.appendChild(dbLabel);
+
+const arc = document.createElementNS(NS, "polyline");     // Δθ
+arc.setAttribute("fill", "none");
+arc.setAttribute("stroke", "var(--accent)");
+arc.setAttribute("stroke-width", "2");
+arc.setAttribute("opacity", "0");
+svg.appendChild(arc);
+
+const dthLabel = document.createElementNS(NS, "text");    // "Δθ"
+dthLabel.setAttribute("font-family", "Source Serif 4, serif");
+dthLabel.setAttribute("font-size", "14"); dthLabel.setAttribute("font-style", "italic");
+dthLabel.setAttribute("fill", "var(--accent)"); dthLabel.setAttribute("opacity", "0");
+dthLabel.textContent = "Δθ";
+svg.appendChild(dthLabel);
+
+const baseDot = document.createElementNS(NS, "circle");
+baseDot.setAttribute("r", 9);
+baseDot.setAttribute("fill", "var(--accent)");
+baseDot.setAttribute("stroke", "#5a0e0e");
+baseDot.setAttribute("stroke-width", "1");
+svg.appendChild(baseDot);
+
+const heading = document.createElementNS(NS, "line");     // robot facing
+heading.setAttribute("stroke", "var(--accent)");
+heading.setAttribute("stroke-width", "2.4");
+heading.setAttribute("stroke-linecap", "round");
+heading.setAttribute("marker-end", "url(#ah-red)");
+svg.appendChild(heading);
+
+const LEN = 30;     // heading arrow length (px)
+const ARC_R = 40;   // Δθ arc radius (px)
+
+// ---- state + render ------------------------------------------------------
+const state = { x: 0, y: 0, theta: 0, vecOp: 0, dbOp: 0, arcOp: 0, dthOp: 0 };
+
+function headingTip(cx, cy, thetaDeg, len) {
+  const t = thetaDeg * Math.PI / 180;
+  // forward = +y (up). CCW yaw tilts toward -x. pixel y is inverted.
+  return { x: cx - Math.sin(t) * len, y: cy - Math.cos(t) * len };
+}
+
+function render() {
+  const cx = sx(state.x), cy = sy(state.y);
+  baseDot.setAttribute("cx", cx); baseDot.setAttribute("cy", cy);
+
+  const tip = headingTip(cx, cy, state.theta, LEN);
+  heading.setAttribute("x1", cx); heading.setAttribute("y1", cy);
+  heading.setAttribute("x2", tip.x); heading.setAttribute("y2", tip.y);
+
+  // translation vector origin -> dot (stop short of the dot)
+  const ox = sx(0), oy = sy(0);
+  const dx = cx - ox, dy = cy - oy, d = Math.hypot(dx, dy) || 1;
+  const ex = cx - (dx / d) * 12, ey = cy - (dy / d) * 12;
+  transVec.setAttribute("x1", ox); transVec.setAttribute("y1", oy);
+  transVec.setAttribute("x2", ex); transVec.setAttribute("y2", ey);
+  transVec.setAttribute("opacity", state.vecOp);
+  dbLabel.setAttribute("x", (ox + cx) / 2 + 8);
+  dbLabel.setAttribute("y", (oy + cy) / 2 - 6);
+  dbLabel.setAttribute("opacity", state.dbOp);
+
+  // Δθ arc: from forward (0°) to current heading, around the dot
+  let pts = "";
+  const steps = 24;
+  for (let i = 0; i <= steps; i++) {
+    const th = (state.theta * i / steps) * Math.PI / 180;
+    const px = cx - Math.sin(th) * ARC_R;
+    const py = cy - Math.cos(th) * ARC_R;
+    pts += `${px.toFixed(1)},${py.toFixed(1)} `;
+  }
+  arc.setAttribute("points", pts.trim());
+  arc.setAttribute("opacity", state.arcOp);
+  const midTip = headingTip(cx, cy, state.theta / 2, ARC_R + 14);
+  dthLabel.setAttribute("x", midTip.x - 6);
+  dthLabel.setAttribute("y", midTip.y);
+  dthLabel.setAttribute("opacity", state.dthOp);
+}
+
+// ---- timeline engine -----------------------------------------------------
+const easeInOut = (p) => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const lerp = (a, b, t) => a + (b - a) * t;
+
+let timeline = [], segIdx = 0, segStart = null, raf = null, looping = true;
+
+function randPt(rmin, rmax) {
+  const a = Math.random() * 2 * Math.PI;
+  const r = rmin + Math.random() * (rmax - rmin);
+  return { x: r * Math.cos(a), y: r * Math.sin(a) };
+}
+
+function buildTimeline() {
+  const S = SWEEP_DEG;
+  const p1 = randPt(5, 12), p2 = randPt(5, 12), settle = randPt(7, 12);
+  const thetaFinal = (Math.random() * 2 - 1) * S;
+
+  Object.assign(state, { x: 0, y: 0, theta: 0, vecOp: 0, dbOp: 0, arcOp: 0, dthOp: 0 });
+
+  const tl = [];
+  const seg = (dur, fn) => tl.push({ dur, fn });
+  const pos = (dur, A, B) => seg(dur, e => { state.x = lerp(A.x, B.x, e); state.y = lerp(A.y, B.y, e); });
+  const yaw = (dur, a, b, op) => seg(dur, e => { state.theta = lerp(a, b, e); if (op !== undefined) state.arcOp = state.dthOp = op; });
+
+  seg(500, () => {});                                  // hold at origin (canonical)
+  pos(720, { x: 0, y: 0 }, p1);                        // wander
+  pos(720, p1, p2);
+  seg(220, () => {});
+  yaw(450, 0, +S, 1);                                  // sweep back & forth (Δθ)
+  yaw(650, +S, -S, 1);
+  yaw(650, -S, +S, 1);
+  yaw(400, +S, 0, 1);
+  seg(820, e => {                                      // settle on a random spot
+    state.x = lerp(p2.x, settle.x, e);
+    state.y = lerp(p2.y, settle.y, e);
+    state.theta = lerp(0, thetaFinal, e);
+  });
+  seg(900, e => { state.vecOp = e; state.dbOp = e; });  // reveal Δb
+  seg(1600, () => {});                                  // hold final pose
+
+  return tl;
+}
+
+function frame(ts) {
+  if (segStart === null) segStart = ts;
+  const s = timeline[segIdx];
+  let p = (ts - segStart) / s.dur;
+  if (p > 1) p = 1;
+  s.fn(easeInOut(p), p);
+  render();
+  if (p >= 1) {
+    segIdx++; segStart = ts;
+    if (segIdx >= timeline.length) {
+      if (looping) { setTimeout(start, 700); }
+      return;
+    }
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+function start() {
+  if (raf) cancelAnimationFrame(raf);
+  timeline = buildTimeline();
+  segIdx = 0; segStart = null;
+  render();
+  raf = requestAnimationFrame(frame);
+}
+
+document.getElementById("replay").addEventListener("click", start);
+document.getElementById("loop").addEventListener("click", (e) => {
+  looping = !looping;
+  e.target.textContent = "Loop: " + (looping ? "on" : "off");
+  if (looping && (!raf || segIdx >= timeline.length)) start();
+});
+
+start();
+
+// ---- report size to parent (for embedding like real_world.html) ----------
+(function () {
+  const send = () => {
+    const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    parent.postMessage({ type: 'iframe-resize', height: h }, '*');
+  };
+  window.addEventListener('load', send);
+  window.addEventListener('resize', send);
+  if (window.ResizeObserver) new ResizeObserver(send).observe(document.body);
+})();
+</script>
+</body>
+</html>
