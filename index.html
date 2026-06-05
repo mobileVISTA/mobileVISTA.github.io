@@ -10,7 +10,7 @@
     <meta property="og:image" content="media/thumbnail.jpg">
     <style>
       .top-figure {
-        width: 54.7%;
+        width: 44.7%;
         margin-left: auto;
         margin-right: auto;
       }
@@ -19,23 +19,66 @@
           height: auto;
       }
       .side-by-side {
-        width: 54.7%;
+        width: 44.7%;
         margin: 1.5vw auto;
         display: flex;
         gap: 1vw;
         align-items: center;
         justify-content: center;
-    }
-    .side-by-side img {
-        width: 50%;
-        height: auto;
-    }
-    .teaser-video {
-        width: 54.7%;
-        display: block;
-        margin: 0 auto;
-        border-radius: 0.5vw;
-    }
+      }
+      .side-by-side img {
+          width: 50%;
+          height: auto;
+      }
+      .teaser-video {
+          width: 44.7%;
+          display: block;
+          margin: 0 auto;
+          border-radius: 0.5vw;
+      }
+      .unmute-hint {
+          width: 44.7%;
+          margin: 0.3vw auto 0;
+          text-align: right;
+          font-size: 0.9vw;
+          color: #888;
+          font-style: italic;
+      }
+      .loop-video {
+          width: 44.7%;
+          display: block;
+          margin: 1.5vw auto;
+          border-radius: 0.5vw;
+          pointer-events: none;
+      }
+      #overview h2 {
+          width: 44.7%;
+          margin: 3vw auto 1vw;
+          font-weight: normal;
+          font-size: 1.4vw;
+      }
+
+      .method-side-by-side {
+          width: 44.7%;
+          margin: 1.5vw auto;
+          display: flex;
+          gap: 2vw;
+          align-items: center;
+      }
+      .method-side-video {
+          width: 45%;
+          border-radius: 0.5vw;
+          pointer-events: none;
+          flex-shrink: 0;
+      }
+      .method-side-text {
+          flex: 1;
+          margin: 0;
+      }
+
+      body {
+    font-size: 18px;
+}
     </style>
 </head>
 <body>
@@ -57,6 +100,7 @@
                 <source src="assets/MobileVISTA_CoRL2026.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
+            <div class="unmute-hint">(Unmute for sound)</div>
         </div>
         <br>
 
@@ -72,50 +116,63 @@
 <hr class="rounded">
 
 <div id="overview">
-    <h1>Method Overview</h1>
-    <p>
-      MobileVISTA takes manipulation demonstrations collected from a single canonical robot pose and generates training data covering a wide range of base poses, without collecting any additional demonstrations. For each augmented trajectory, we sample a base perturbation and jointly synthesize two things: a pose-shifted egocentric observation (via geometry-based reprojection, robot segmentation, and inpainting) and a retargeted action sequence (via inverse kinematics in end-effector space). Policies trained on the resulting dataset learn to handle base poses far outside the original demonstration distribution at test time.
-    </p>
+  <h1>Method Overview</h1>
+  <p>
+    MobileVISTA takes single-pose manipulation demonstrations and produces training data covering a wide range of base poses, without collecting additional demonstrations. For each augmented trajectory, we sample a base perturbation and jointly synthesize (1) a pose-shifted egocentric observation and (2) a retargeted action sequence consistent with that observation.
+  </p>
 
-    <h1>Example Augmented Dataset Trajectories</h1>
-    <p>
-      A single source demonstration becomes many augmented variants, each capturing what the same task would look like and require if the robot had started from a different base pose. The center shows the original canonical trajectory; the surrounding variants show forward, backward, leftward, and rightward translations, along with positive and negative yaw rotations. Both the visual observations and the actions are updated consistently in each variant.
-    </p>
+  <video class="loop-video" autoplay loop muted playsinline>
+      <source src="assets/method.mp4" type="video/mp4">
+  </video>
+
+  <p>
+    We synthesize new <b>egocentric visual observations</b> via geometry-based reprojection: segment the robot from the scene, lift the remaining RGB-D into a colored point cloud, reproject from the perturbed egocentric camera, inpaint disoccluded regions, and re-render the robot at its retargeted joint configuration.  We <b>retarget actions</b> in end-effector space by applying the inverse base perturbation to each per-timestep end-effector goal, then solving inverse kinematics to recover joint commands that preserve the original end-effector trajectory.
+  </p>
+
+
+
+  <h1>Example Augmented Dataset Trajectories</h1>
+  <p>
+    A single source demonstration becomes many augmented variants, each capturing what the same task would look like and require if the robot had started from a different base pose. The center shows the original canonical trajectory; the surrounding variants show various translation and rotation offsets.
+  </p>
+
+  <video class="loop-video" autoplay loop muted playsinline>
+      <source src="assets/examples.mp4" type="video/mp4">
+  </video>
+    
 
     <h1>Real-World Deployment</h1>
     <p>
-        We deploy MobileVISTA on a Galaxea R1 Pro humanoid and compare against three baselines: a vanilla 2D diffusion policy trained only on canonical-pose demonstrations (Canonical-2D), a 3D point-cloud-based diffusion policy (DP3), and a fine-tuned &pi;<sub>0.5</sub> vision-language-action model. For each evaluation trial, we sample a base offset uniformly within a 15cm disk and manually drive the robot to that offset, then roll out all four policies from the same starting configuration in randomized order. The plots below show the spatial distribution of outcomes: each dot is a sampled base offset (overhead view, in centimeters), colored by whether each policy succeeded from that starting pose.<br><br><br>
+        We evaluate MobileVISTA on a Galaxea R1 Pro humanoid against three baselines — Canonical-2D, DP3, and fine-tuned &pi;<sub>0.5</sub> — across 25 trials per policy at base offsets sampled uniformly within a 15cm disk. Each dot in the plots below represents one sampled offset (overhead view, cm), colored by outcome.<br><br><br>
     </p>
-
+    
     <!-- ============ BOOK STACKING ============ -->
     <h2>Book Stacking</h2>
-
+    
     <div class="top-figure">
-      <img src="assets/real_plot.png" alt="Book stacking rollout outcomes grouped by policy" />
+        <img src="assets/real_plot.png" alt="Book stacking rollout outcomes grouped by policy" />
     </div>
-
     <p>
-      <br><br><br>In Book Stacking, the robot must grasp a vertically placed book and reorient it horizontally onto a stack inside a bookshelf. MobileVISTA succeeds across a wide range of offsets, while the baselines collapse beyond the canonical pose. Click any dot in the plot to load the four corresponding rollout videos.
+        The robot grasps a vertically placed book and reorients it horizontally onto a stack inside a bookshelf. MobileVISTA succeeds across a wide range of offsets while all baselines collapse beyond the canonical pose. Click any dot to load the four corresponding rollout videos.
     </p>
-
+    
     <div class="rollouts-wrapper" style="margin: 1.5vw auto 1vw;">
-      <iframe class="rollouts-frame"
-        src="real_world.html"
-        title="Book stacking rollout viewer"
-        frameborder="0"
-        scrolling="no"
-        style="width: 100%; border: none; display: block; transition: height 0.2s ease;"></iframe>
+        <iframe class="rollouts-frame"
+            src="real_world.html"
+            title="Book stacking rollout viewer"
+            frameborder="0"
+            scrolling="no"
+            style="width: 100%; border: none; display: block; transition: height 0.2s ease;"></iframe>
     </div>
-
+    
     <!-- ============ LAUNDRY SORT ============ -->
     <h2>Laundry Sort</h2>
-
+    
     <div class="top-figure">
-      <img src="assets/laundry_real_plot.png" alt="Laundry sort rollout outcomes grouped by policy" />
+        <img src="assets/laundry_real_plot.png" alt="Laundry sort rollout outcomes grouped by policy" />
     </div>
-
     <p>
-      <br><br><br>In Laundry Sort, the robot must sort four items into two bins: two black socks into a grey bin on the left, and a yellow towel and a beige pair of shorts into a larger green bin on the right. This task is substantially more challenging than Book Stacking due to its longer horizon, the deformability of the items, and the bimanual coordination required to sort multiple objects in sequence. Click any dot in the plot to load the four corresponding rollout videos. Each video panel shows the score (number of items correctly sorted out of four); an asterisk indicates a joint-limit violation during the rollout.
+        The robot sorts four laundry items into two bins by category: black socks into a grey bin, and a yellow towel and beige shorts into a green bin. MobileVISTA substantially outperforms all baselines on this longer-horizon bimanual task with deformable objects. Click any dot to load rollout videos. Each panel shows items correctly sorted out of four; asterisks indicate joint-limit violations.
     </p>
 
     <div class="rollouts-wrapper" style="margin: 1.5vw auto 1vw;">
@@ -152,19 +209,34 @@
     </script>
 
     <h1>Quality Analysis of Synthesized Observations</h1>
+
     <p>
-        We compare MobileVISTA's geometry-based observation synthesis against GEN3C, a state-of-the-art learned novel view synthesis model. Across all four simulated tasks, MobileVISTA produces sharper object boundaries, more consistent scene geometry, and higher PSNR against simulator-rendered oracle views. Policies trained on MobileVISTA-synthesized data also outperform those trained on GEN3C-synthesized data across the full range of perturbation magnitudes, with the gap in downstream performance tracking the gap in reconstruction quality.
-    </p>
+      We compare MobileVISTA against GEN3C, a state-of-the-art learned novel view synthesis model. MobileVISTA produces higher-fidelity observations across all four tested tasks. Qualitatively, MobileVISTA preserves sharp object boundaries and consistent scene geometry, while GEN3C tends to blur edges and distort surfaces under larger viewpoint shifts.
+  </p>
     <div class="side-by-side">
         <img src="assets/gen3c_qual.png" alt="Qualitative comparison with Gen3C" />
         <img src="assets/gen3c_psnr.png" alt="PSNR by trajectory" />
     </div>
-    <br>
+
+    <p>
+    Policies trained on MobileVISTA-synthesized data consistently outperform those trained on GEN3C data, with downstream performance tracking PSNR reconstruction quality.
+  </p>
+  <br>
+    <div class="top-figure">
+      <img src="assets/gen3c_comparison.png" alt="Laundry sort rollout outcomes grouped by policy" />
+  </div>
+
 
     <h1>Results</h1>
     <p>
-        We evaluate MobileVISTA across four simulated tasks spanning two embodiments: Can Sort and Pouring on a Fourier GR-1 humanoid, and Box and Drawer on a bimanual Franka setup. MobileVISTA consistently outperforms Canonical-2D, DP3, and fine-tuned &pi;<sub>0.5</sub> baselines across all tasks, maintaining high success rates as the magnitude of base perturbation grows. The advantage holds even at large 15cm offsets, where the baselines collapse to near zero.
-    </p>
+      We evaluate MobileVISTA across four simulated tasks on two embodiments: Can Sort and Pouring on a Fourier GR-1 humanoid, and Box and Drawer on a bimanual Franka. MobileVISTA consistently outperforms all baselines across tasks and perturbation magnitudes, maintaining high success rates even at 15cm offsets where baselines collapse to near zero.
+  </p>
+    <br>
+    <div class="top-figure">
+      <img src="assets/randomized.png" alt="Laundry sort rollout outcomes grouped by policy" />
+  </div>
+  <br><br>
+
 </div>
 
 </body>
