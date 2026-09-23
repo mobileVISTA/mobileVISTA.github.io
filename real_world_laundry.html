@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <title>Real-world Rollouts &mdash; Laundry Sort</title>
+<link href="https://fonts.googleapis.com/css?family=Google+Sans" rel="stylesheet">
 <link rel="stylesheet" href="main.css">
 <style>
   :root {
     --bg: #ffffff;
-    --fg: #2E2D29;
+    --fg: #4a4a4a;
     --muted: #53565A;
     --accent: #8C1515;
     --grid: #d8d8d8;
@@ -27,7 +28,7 @@
     padding: 0;
   }
   body {
-    font-family: "Source Serif 4", Georgia, serif;
+    font-family: "Google Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -39,7 +40,7 @@
 
   .top-figure {
     text-align: center;
-    margin-bottom: 1.5vw;
+    margin-bottom: 16px;
   }
   .top-figure img {
     max-width: 100%;
@@ -48,19 +49,19 @@
 
   .hint {
     color: var(--muted);
-    font-size: 0.9vw;
+    font-size: 0.85rem;
     text-align: center;
-    margin-bottom: 1vw;
+    margin-bottom: 12px;
     font-style: italic;
   }
-  @media (max-width: 1000px) {
-    .hint { font-size: 2.5vw; }
+  @media (max-width: 600px) {
+    .hint { font-size: 0.8rem; }
   }
 
   .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
-    gap: 1.5vw;
+    gap: 16px;
     align-items: start;
   }
 
@@ -74,20 +75,20 @@
   svg.plot .dot.active { fill: var(--dot-active); stroke: var(--dot-active-edge); transform: scale(1.35); }
 
   .info {
-    margin-top: 0.8vw;
-    font-family: "Source Serif 4", serif;
-    font-size: 0.85vw;
+    margin-top: 8px;
+    font-family: "Google Sans", sans-serif;
+    font-size: 0.85rem;
     color: var(--muted);
     text-align: center;
   }
-  @media (max-width: 1000px) {
-    .info { font-size: 2.5vw; }
+  @media (max-width: 600px) {
+    .info { font-size: 0.8rem; }
   }
 
   .videos {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.6vw;
+    gap: 8px;
     min-width: 0;
   }
 
@@ -100,7 +101,7 @@
   .vpanel video {
     width: 100%;
     display: block;
-    border-radius: 0.4vw;
+    border-radius: 6px;
     aspect-ratio: 160 / 96;
   }
   .vpanel .empty {
@@ -110,40 +111,43 @@
     align-items: center;
     justify-content: center;
     color: var(--muted);
-    font-size: 0.75vw;
+    font-size: 0.85rem;
     background: #f4f4f4;
-    border-radius: 0.4vw;
+    border-radius: 6px;
     font-style: italic;
   }
   .vpanel .label {
-    margin-top: 0.5vw;
-    font-family: "Source Serif 4", serif;
+    margin-top: 6px;
+    font-family: "Google Sans", sans-serif;
     font-weight: 600;
-    font-size: 0.9vw;
+    font-size: 1rem;
     color: var(--fg);
     text-align: center;
     line-height: 1.2;
   }
+  .vpanel[data-policy="ours"] .label {
+    color: #c0392b;
+  }
   .vpanel .outcome {
-    margin-top: 0.3vw;
+    margin-top: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.35vw;
-    height: 1.4vw;
+    gap: 4px;
+    height: auto;
     min-height: 22px;
-    font-family: "Source Serif 4", serif;
+    font-family: "Google Sans", sans-serif;
     font-weight: 600;
-    font-size: 0.85vw;
+    font-size: 0.85rem;
     color: var(--fg);
   }
   .vpanel .outcome svg { display: block; }
   .vpanel .outcome .joint-mark { color: var(--accent); cursor: help; }
 
-  @media (max-width: 1000px) {
-    .vpanel .empty { font-size: 2vw; }
-    .vpanel .label { font-size: 2vw; }
-    .vpanel .outcome { font-size: 2vw; }
+  @media (max-width: 600px) {
+    .vpanel .empty { font-size: 0.8rem; }
+    .vpanel .label { font-size: 0.8rem; }
+    .vpanel .outcome { font-size: 0.8rem; }
   }
 </style>
 </head>
@@ -303,13 +307,13 @@ for (const t of ticks) {
   const tx = document.createElementNS(NS, "text");
   tx.setAttribute("x", sx(t)); tx.setAttribute("y", sy(0) + 14);
   tx.setAttribute("text-anchor", "middle"); tx.setAttribute("font-size", "10");
-  tx.setAttribute("font-family", "Source Serif 4, serif");
+  tx.setAttribute("font-family", "Google Sans, sans-serif");
   tx.setAttribute("font-weight", "600"); tx.setAttribute("fill", "var(--muted)");
   tx.textContent = t; svg.appendChild(tx);
   const ty = document.createElementNS(NS, "text");
   ty.setAttribute("x", sx(0) - 6); ty.setAttribute("y", sy(t) + 3);
   ty.setAttribute("text-anchor", "end"); ty.setAttribute("font-size", "10");
-  ty.setAttribute("font-family", "Source Serif 4, serif");
+  ty.setAttribute("font-family", "Google Sans, sans-serif");
   ty.setAttribute("font-weight", "600"); ty.setAttribute("fill", "var(--muted)");
   ty.textContent = t; svg.appendChild(ty);
 }
@@ -355,7 +359,7 @@ function selectTrial(i) {
       v.playsInline = true;
       v.style.width = "100%";
       v.style.display = "block";
-      v.style.borderRadius = "0.4vw";
+      v.style.borderRadius = "6px";
       const empty = panel.querySelector(".empty");
       if (empty) empty.style.display = "none";
       panel.insertBefore(v, panel.firstChild);
@@ -367,6 +371,10 @@ function selectTrial(i) {
     panel.querySelector(".outcome").innerHTML = outcomeHTML(trial.outcomes[policy], trial.joints[policy]);
   }
 }
+
+// Default to a representative trial (Right 7.26cm, Forward 2.51cm) so the panel isn't empty on load.
+const DEFAULT_TRIAL = TRIALS.findIndex(t => t.x === 7.26 && t.y === 2.51);
+if (DEFAULT_TRIAL !== -1) selectTrial(DEFAULT_TRIAL);
 
 // Report own size to parent
 (function () {
