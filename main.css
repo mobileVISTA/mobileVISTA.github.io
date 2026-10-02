@@ -32,7 +32,8 @@
 :root {
     --page-max: 1100px;
     --page-pad: clamp(24px, 6vw, 56px);
-    --content-w: min(calc(var(--page-max) - 2 * var(--page-pad)), calc(100% - 2 * var(--page-pad)));
+    --content-w-base: min(calc(var(--page-max) - 2 * var(--page-pad)), calc(100% - 2 * var(--page-pad)));
+    --content-w: calc(1.1 * var(--content-w-base) - 10%);
     --abstract-w: calc(0.8 * var(--content-w) - 4.8px);
 }
 
